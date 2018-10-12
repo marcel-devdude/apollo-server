@@ -84,6 +84,27 @@ const server = new ApolloServer({
 });
 ```
 
+You can access the extended context from the `onConnect` callback with `connection.context`. If you want to make the extended context available in your resolvers, return `connection.context`:
+
+```js
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  subscriptions: {
+    onConnect: (connectionParams, webSocket) => {
+      return { extended: 'context' };
+    },
+  },
+  context: ({ req, connection }) => {
+    if (!req) {
+      return connection.context;
+    } else {
+      return { regular: 'context' };
+    }
+  },
+});
+```
+
 As you can see Apollo Server 2.0 allows realtime data without invasive changes to existing code.
 For a full working example please have a look to [this repo](https://github.com/daniele-zurico/apollo2-subscriptions-how-to) provided by [Daniele Zurico](https://github.com/daniele-zurico/apollo2-subscriptions-how-to)
 
@@ -136,7 +157,7 @@ server.listen().then(({ url, subscriptionsUrl }) => {
 });
 ```
 
-The example above validates the user's token that is sent with the first initialization message on the transport, then it looks up the user and returns the user object as a Promise. The user object found will be available as `context.currentUser` in your GraphQL resolvers.
+The example above validates the user's token that is sent with the first initialization message on the transport, then it looks up the user and returns the user object as a Promise. To make the user object available as `context.currentUser` in your GraphQL resolvers, you have to keep care that the context is exposed in the `context` function. See also [Context with Subscriptions](#Context-with-Subscriptions).
 
 In case of an authentication error, the Promise will be rejected, which prevents the client's connection.
 
